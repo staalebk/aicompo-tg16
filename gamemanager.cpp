@@ -25,7 +25,8 @@
 GameManager::GameManager(QQuickView *view) : QObject(view),
     m_view(view),
     m_roundsPlayed(0),
-    m_ticksLeft(-1)
+    m_ticksLeft(-1),
+    m_isGameRunning(false)
 {
 
     // Add QML objects
@@ -110,6 +111,9 @@ void GameManager::startRound()
         return;
     }
 
+    m_isGameRunning = true;
+    emit isGameRunningChanged();
+
     resetPositions();
 
     for (int i=0; i<m_players.count(); i++) {
@@ -149,7 +153,6 @@ void GameManager::gameTick()
         missile->doMove();
 
         if (!missile->isAlive()) {
-            emit explosion(missile->position());
             missile->deleteLater();
             missileIterator.remove();
             continue;
@@ -357,6 +360,8 @@ void GameManager::togglePause()
 void GameManager::stopGame()
 {
     m_tickTimer.stop();
+    m_isGameRunning = false;
+    emit isGameRunningChanged();
 
     QMutableListIterator<Player*> it(m_players);
     while(it.hasNext()) {

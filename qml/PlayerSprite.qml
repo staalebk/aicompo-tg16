@@ -4,23 +4,9 @@ import QtQuick.Particles 2.0
 
 Item {
     id: playerSprite
-    rotation: modelData.rotation + 90
 
     property int playerId
     property string command: modelData.lastCommand
-
-    ParticleSystem {
-        id: accelerationParticles
-        anchors.fill: parent
-        ImageParticle {
-            source: "qrc:///sprites/star.png"
-            alpha: 0.1
-            alphaVariation: 0.1
-            color: playerColors[playerId]
-//            colorVariation: 0.3
-            //color: "#01ffffff"
-        }
-    }
 
     x: main.width / 2 + targetX * main.width / 2 - width / 2
     y: main.height / 2 + targetY * main.height / 2 - height / 2
@@ -67,21 +53,6 @@ Item {
         duration: 50
     }
 
-//    Behavior on playerX {
-//        SmoothedAnimation {
-//            velocity: 60/modelData.velocityX
-////            easing.type: Easing.Linear
-//        }
-//    }
-
-//    Behavior on playerY {
-//        SmoothedAnimation {
-//            velocity: 60/modelData.velocityY
-//            //velocity: 60
-////            easing.type: Easing.Linear
-//        }
-//    }
-
     Image {
         id: image
         anchors.centerIn: parent
@@ -90,16 +61,13 @@ Item {
         source: modelData.spritePath//"qrc:/sprites/players/player" + playerId + ".png"
         opacity: alive ? 1 : 0
         smooth: false
+        rotation: modelData.rotation + 90
 
         Behavior on opacity {
             NumberAnimation {
                 easing.type: Easing.Linear
-                duration: 1000
+                duration: 100
             }
-        }
-
-        Behavior on rotation {
-            SmoothedAnimation { duration: 200 }
         }
 
         Emitter {
@@ -107,15 +75,16 @@ Item {
             x: parent.width/2 - parent.width / 4
             y: parent.height /2 - parent.height / 4
             emitRate: 2000
-            lifeSpan: 150
+            lifeSpan: 50
             lifeSpanVariation: 100
             enabled: false
-            velocity: AngleDirection{ angle: 90; magnitude: 1000; angleVariation: 15}
+            velocity: AngleDirection{ angle: modelData.rotation + 180; magnitude: 1000; angleVariation: 15}
             size: 50
             sizeVariation: 5
-            system: accelerationParticles
+            system: particleSystem
             width: parent.width / 2
             height: parent.height /2
+            group: particleSystem.particleGroups[playerId]
         }
 
 
@@ -127,20 +96,8 @@ Item {
             width: modelData.energy / 100
             border.width: modelData.energy / 500
             border.color: playerColors[playerId]
-//            opacity: 0.5
-            //opacity: modelData.energy / 1000
         }
-    }
 
-    ParticleSystem {
-        id: deathParticles
-        anchors.fill: image
-        ImageParticle {
-            source: "qrc:///sprites/star.png"
-            alpha: 0.0
-            colorVariation: 0.1
-            color: playerColors[playerId]
-        }
 
         Emitter {
             id: deathEmitter
@@ -149,13 +106,15 @@ Item {
             lifeSpan: 2000
             lifeSpanVariation: 1000
             enabled: false
-            velocity: AngleDirection{magnitude: 8; angleVariation: 360}
+            velocity: AngleDirection{magnitude: 8; magnitudeVariation: 20; angleVariation: 360}
             size: 24
             sizeVariation: 16
 
             shape: MaskShape {
                 source: image.source
             }
+            group: particleSystem.particleGroups[playerId]
+            system: particleSystem
         }
     }
 
@@ -166,25 +125,6 @@ Item {
         }
     }
 
-    // Try to smooth out movement between ticks
-//    Behavior on x {
-//        enabled: true
-//        NumberAnimation {
-//            id: xAnimation
-//            easing { type: Easing.OutQuad; amplitude: 1.0; period: 0.9 }
-//            duration: 50
-//        }
-//    }
-
-//    Behavior on y {
-//        enabled: true
-//        NumberAnimation {
-//            id: yAnimation
-//            easing { type: Easing.OutQuad; amplitude: 1.0; period: 0.9 }
-//            duration: 50
-//        }
-//    }
-
     property bool alive: modelData.alive
     onAliveChanged: {
         if (!alive) {
@@ -193,7 +133,18 @@ Item {
         }
     }
 
-    property var particleGroups: ["Player1", "Player2", "Player3", "Player4"]
+    Text {
+        anchors.horizontalCenter: image.horizontalCenter
+        anchors.bottom: parent.bottom
+        text: modelData.name
+        color: "white"
+        style: Text.Outline
+        styleColor: "black"
+        font.family: "Aldrich"
+        font.pointSize: 10
+        font.strikeout: !modelData.alive
+    }
+
     Emitter {
         id: trailEmitter
         anchors.fill: parent
@@ -205,10 +156,9 @@ Item {
         velocity: AngleDirection{ magnitude: 10; magnitudeVariation: 10; angleVariation: 360}
         size: 8
         sizeVariation: 4
-        system: missileParticles
-        group: particleGroups[playerId]
+        system: particleSystem
+        group: particleSystem.particleGroups[playerId]
         endSize: 0
         shape: EllipseShape { }
     }
-
 }
